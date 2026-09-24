@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Beaga Semi-Jóias - Calculadora de Banho</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    body {
+      background-color: #f4f6f8;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+    .container {
+      background-color: #ffffff;
+      width: 100%;
+      max-width: 450px;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    h1 {
+      color: #1a1a1a;
+      font-size: 22px;
+      text-align: center;
+      margin-top: 0;
+      margin-bottom: 6px;
+    }
+    p.subtitle {
+      color: #666;
+      font-size: 14px;
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 6px;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus {
+      border-color: #d4af37;
+    }
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    button {
+      flex: 1;
+      background-color: #d4af37;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 14px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    button:hover {
+      background-color: #b89628;
+    }
+    button.btn-secundario {
+      background-color: #f0f0f0;
+      color: #333;
+    }
+    button.btn-secundario:hover {
+      background-color: #e0e0e0;
+    }
+    .result-box {
+      margin-top: 24px;
+      background-color: #faf8f2;
+      border: 1px solid #e8dfc4;
+      border-radius: 10px;
+      padding: 16px;
+      display: none;
+    }
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 15px;
+      color: #444;
+    }
+    .result-row.destaque {
+      font-weight: bold;
+      color: #1a1a1a;
+    }
+    .result-row.total {
+      font-size: 18px;
+      font-weight: bold;
+      color: #1a1a1a;
+      border-top: 1px solid #d4af37;
+      padding-top: 10px;
+      margin-top: 10px;
+      margin-bottom: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Beaga Semi-Jóias</h1>
+    <p class="subtitle">Cálculo de Banho e Atacado</p>
+
+    <!-- Base do Banho -->
+    <div class="form-group">
+      <label for="mile">Milésimos do banho:</label>
+      <input type="number" id="mile" step="0.01" placeholder="Ex: 10">
+    </div>
+
+    <div class="form-group">
+      <label for="maod">Valor da Mão de Obra:</label>
+      <input type="number" id="maod" step="0.01" placeholder="Ex: 5.50">
+    </div>
+
+    <div class="form-group">
+      <label for="cota">Cotação do Ouro:</label>
+      <input type="number" id="cota" step="0.01" placeholder="Ex: 350.00">
+    </div>
+
+    <hr style="border: 0; border-top: 1px dashed #ccc; margin: 20px 0;">
+
+    <!-- Dados da Peça Específica -->
+    <div class="form-group">
+      <label for="peso">Peso da Peça (g):</label>
+      <input type="number" id="peso" step="0.01" placeholder="Ex: 4.2">
+    </div>
+
+    <div class="form-group">
+      <label for="prec">Valor CodBru (Peça Bruta):</label>
+      <input type="number" id="prec" step="0.01" placeholder="Ex: 12.00">
+    </div>
+
+    <div class="btn-group">
+      <button onclick="calcular()">Calcular</button>
+      <button onclick="limpar()" id="btnLimpar" class="btn-secundario" style="display: none;">Novo Cálculo</button>
+    </div>
+
+    <div id="resultado" class="result-box">
+      <div class="result-row">
+        <span>Custo do Banho na Peça:</span>
+        <span id="resBanho">R$ 0,00</span>
+      </div>
+      <div class="result-row">
+        <span>Custo Peça Bruta:</span>
+        <span id="resBruta">R$ 0,00</span>
+      </div>
+      <div class="result-row destaque">
+        <span>Custo Total (CusTot):</span>
+        <span id="resCustoTotal">R$ 0,00</span>
+      </div>
+      <div class="result-row total">
+        <span>Atacado (+ 2):</span>
+        <span id="resAtacado">R$ 0,00</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Função para formatar números para Moeda (R$)
+    const formatarMoeda = (valor) => {
+      return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+      }).format(valor);
+    };
+
+    function calcular() {
+      // Coletando os valores digitados
+      const mile = parseFloat(document.getElementById('mile').value);
+      const maod = parseFloat(document.getElementById('maod').value);
+      const cota = parseFloat(document.getElementById('cota').value);
+      const peso = parseFloat(document.getElementById('peso').value);
+      const prec = parseFloat(document.getElementById('prec').value);
+
+      // Validação básica para evitar cálculos com campos vazios
+      if (isNaN(mile) || isNaN(maod) || isNaN(cota) || isNaN(peso) || isNaN(prec)) {
+        alert("Por favor, preencha todos os campos para realizar o cálculo.");
+        return;
+      }
+
+      // LÓGICA DO PYTHON APLICADA AQUI:
+      // (milesimo do banho + mao de obra) x cotacao do ouro = valor por kg
+      const soma1 = mile + maod;
+      const valkg = soma1 * cota;
+
+      // Cálculo por grama e custo do banho na peça específica
+      const valg = valkg / 1000;
+      const mult = valg * peso; // Custo do banho
+
+      // Custo Total (Banho + CodBru)
+      const custo = mult + prec;
+
+      // Regra de Venda (Atacado)
+      const atac = custo * 3;
+      const final = atac + 2;
+
+      // Exibindo os resultados na tela
+      document.getElementById('resBanho').innerText = formatarMoeda(mult);
+      document.getElementById('resBruta').innerText = formatarMoeda(prec);
+      document.getElementById('resCustoTotal').innerText = formatarMoeda(custo);
+      document.getElementById('resAtacado').innerText = formatarMoeda(final);
+
+      // Mostra a caixa de resultado e o botão de limpar
+      document.getElementById('resultado').style.display = 'block';
+      document.getElementById('btnLimpar').style.display = 'block';
+    }
+
+    function limpar() {
+      // Limpa apenas o Peso e o CodBru para facilitar o cálculo de várias peças (igual o While True do Python)
+      document.getElementById('peso').value = '';
+      document.getElementById('prec').value = '';
+      
+      // Oculta os resultados
+      document.getElementById('resultado').style.display = 'none';
+      document.getElementById('btnLimpar').style.display = 'none';
+      
+      // Foca no campo de peso para agilizar a digitação
+      document.getElementById('peso').focus();
+    }
+  </script>
+
+</body>
+</html>
